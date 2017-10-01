@@ -25,7 +25,7 @@ CREATE TABLE actors(
 CREATE TABLE producer (
   producer_name VARCHAR(50) NOT NULL ,
   producer_surname VARCHAR(50) NOT NULL ,
-  producer_bithday VARCHAR(50) NOT NULL ,
+  producer_bithday DATE NOT NULL ,
   producer_motherland VARCHAR(50) DEFAULT 'USA' NOT NULL,
   producer_id SERIAL,
   PRIMARY KEY (producer_name, producer_surname, producer_bithday)
@@ -54,7 +54,7 @@ ALTER TABLE movies DROP CONSTRAINT movies_check;
 ALTER TABLE movies ADD CHECK ((extract(YEAR FROM movie_year) > 1900
                                AND cast(movie_budget AS NUMERIC) < 10000 AND cast(movie_budget AS NUMERIC) >+ 1000
                                AND EXTRACT(YEAR FROM movie_year) < EXTRACT(YEAR FROM current_date) + 10)
-)
+);
 
 CREATE TABLE genre(
   genre_movie_id INTEGER NOT NULL ,
@@ -65,10 +65,14 @@ CREATE TABLE genre(
 ALTER TABLE movies DROP COLUMN movie_genres;
 
 CREATE TYPE MOTHERLAND AS ENUM ('Russia', 'UK', 'USA', 'France', 'Germany');
+
+ALTER TABLE producer ALTER producer_motherland DROP DEFAULT;
+
 ALTER TABLE producer ALTER COLUMN producer_motherland TYPE MOTHERLAND USING producer_motherland::MOTHERLAND;
 
-ALTER TABLE producer ADD CHECK (EXTRACT(YEAR FROM producer_bithday) < EXTRACT(YEAR FROM current_date)) ;
+
+ALTER TABLE producer ADD CHECK (extract(YEAR FROM producer_bithday) <= extract(YEAR FROM current_date));
 
 CREATE INDEX actor_index ON actors (actor_name, actor_surname);
 
-ALTER TABLE "public ".movies RENAME COLUMN movie_name TO "movie_name(movie_contry)";
+UPDATE movies SET movie_name = concat(movie_name, ' (', extract(YEAR FROM movie_year), ')');
